@@ -11,7 +11,6 @@ using IdentityServer4.Hosting;
 using IdentityServer4.ResponseHandling;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
-using IdentityServer4.Stores.Serialization;
 using IdentityServer4.Validation;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +25,7 @@ using static IdentityServer4.Constants;
 using IdentityServer4.Extensions;
 using IdentityServer4.Hosting.FederatedSignOut;
 using IdentityServer4.Services.Default;
+using IdentityServer4.Stores.Serialization;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

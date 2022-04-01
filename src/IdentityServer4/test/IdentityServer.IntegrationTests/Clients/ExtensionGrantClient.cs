@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using IdentityModel;
@@ -16,8 +17,6 @@ using IdentityModel.Client;
 using IdentityServer.IntegrationTests.Clients.Setup;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace IdentityServer.IntegrationTests.Clients
@@ -50,7 +49,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "scope", "api1" }
                 }
             });
@@ -65,22 +64,22 @@ namespace IdentityServer.IntegrationTests.Clients
             var payload = GetPayload(response);
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var exp = Int64.Parse(payload["exp"].ToString());
+            var exp = long.Parse(payload["exp"].ToString());
             exp.Should().BeLessThan(unixNow + 3605);
             exp.Should().BeGreaterThan(unixNow + 3595);
 
-            payload.Count().Should().Be(12);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.custom");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
+            payload.Count.Should().Be(12);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.custom");
+            payload["sub"].GetString().Should().Be("818727");
+            payload["idp"].GetString().Should().Be("local");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("custom");
         }
@@ -98,7 +97,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "extra_claim", "extra_value" },
                     { "scope", "api1" }
                 }
@@ -114,23 +113,23 @@ namespace IdentityServer.IntegrationTests.Clients
             var payload = GetPayload(response);
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var exp = Int64.Parse(payload["exp"].ToString());
+            var exp = long.Parse(payload["exp"].ToString());
             exp.Should().BeLessThan(unixNow + 3605);
             exp.Should().BeGreaterThan(unixNow + 3595);
 
-            payload.Count().Should().Be(13);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.custom");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
-            payload.Should().Contain("extra_claim", "extra_value");
+            payload.Count.Should().Be(13);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.custom");
+            payload["sub"].GetString().Should().Be("818727");
+            payload["idp"].GetString().Should().Be("local");
+            payload["extra_claim"].GetString().Should().Be("extra_value");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("custom");
         }
@@ -148,7 +147,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "extra_claim", "extra_value" },
                     { "scope", "api1 offline_access" }
                 }
@@ -164,7 +163,7 @@ namespace IdentityServer.IntegrationTests.Clients
             var refreshResponse = await _client.RequestRefreshTokenAsync(new RefreshTokenRequest
             {
                 Address = TokenEndpoint,
-                
+
                 ClientId = "client.custom",
                 ClientSecret = "secret",
 
@@ -181,23 +180,23 @@ namespace IdentityServer.IntegrationTests.Clients
             var payload = GetPayload(refreshResponse);
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var exp = Int64.Parse(payload["exp"].ToString());
+            var exp = long.Parse(payload["exp"].ToString());
             exp.Should().BeLessThan(unixNow + 3605);
             exp.Should().BeGreaterThan(unixNow + 3595);
 
-            payload.Count().Should().Be(13);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.custom");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
-            payload.Should().Contain("extra_claim", "extra_value");
+            payload.Should().HaveCount(13);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.custom");
+            payload["sub"].GetString().Should().Be("818727");
+            payload["idp"].GetString().Should().Be("local");
+            payload["extra_claim"].GetString().Should().Be("extra_value");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("custom");
         }
@@ -215,7 +214,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "scope", "api1" }
                 }
             });
@@ -229,13 +228,13 @@ namespace IdentityServer.IntegrationTests.Clients
 
             var payload = GetPayload(response);
 
-            payload.Count().Should().Be(8);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.custom");
+            payload.Should().HaveCount(8);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.custom");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
         }
 
@@ -252,7 +251,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"}
+                    { "custom_credential", "custom credential" }
                 }
             });
 
@@ -265,19 +264,19 @@ namespace IdentityServer.IntegrationTests.Clients
 
             var payload = GetPayload(response);
 
-            payload.Count().Should().Be(12);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.custom");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
+            payload.Should().HaveCount(12);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.custom");
+            payload["sub"].GetString().Should().Be("818727");
+            payload["idp"].GetString().Should().Be("local");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("custom");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.Count().Should().Be(3);
             scopes.First().ToString().Should().Be("api1");
             scopes.Skip(1).First().ToString().Should().Be("api2");
@@ -320,7 +319,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "scope", "api1" }
                 }
             });
@@ -344,7 +343,7 @@ namespace IdentityServer.IntegrationTests.Clients
 
                 Parameters =
                 {
-                    { "custom_credential", "custom credential"},
+                    { "custom_credential", "custom credential" },
                     { "scope", "api1" }
                 }
             });
@@ -370,8 +369,8 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "lifetime", "5000"},
-                    { "sub",  "818727"}
+                    { "lifetime", "5000" },
+                    { "sub", "818727" }
                 }
             });
 
@@ -385,22 +384,22 @@ namespace IdentityServer.IntegrationTests.Clients
             var payload = GetPayload(response);
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var exp = Int64.Parse(payload["exp"].ToString());
+            var exp = long.Parse(payload["exp"].ToString());
             exp.Should().BeLessThan(unixNow + 5005);
             exp.Should().BeGreaterThan(unixNow + 4995);
 
-            payload.Count().Should().Be(10);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.dynamic");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
+            payload.Should().HaveCount(10);
+            payload["iss"].Should().Be("https://idsvr4");
+            payload["client_id"].Should().Be("client.dynamic");
+            payload["sub"].Should().Be("818727");
+            payload["idp"].Should().Be("local");
 
             payload["aud"].Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("delegation");
         }
@@ -420,8 +419,8 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "type", "jwt"},
-                    { "sub",  "818727"}
+                    { "type", "jwt" },
+                    { "sub", "818727" }
                 }
             });
 
@@ -450,9 +449,9 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "type", "jwt"},
-                    { "impersonated_client", "impersonated_client_id"},
-                    { "sub",  "818727"}
+                    { "type", "jwt" },
+                    { "impersonated_client", "impersonated_client_id" },
+                    { "sub", "818727" }
                 }
             });
 
@@ -484,8 +483,8 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "type", "reference"},
-                    { "sub",  "818727"}
+                    { "type", "reference" },
+                    { "sub", "818727" }
                 }
             });
 
@@ -514,8 +513,8 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "claim", "extra_claim"},
-                    { "sub",  "818727"}
+                    { "claim", "extra_claim" },
+                    { "sub", "818727" }
                 }
             });
 
@@ -528,20 +527,20 @@ namespace IdentityServer.IntegrationTests.Clients
 
             var payload = GetPayload(response);
 
-            payload.Count().Should().Be(13);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.dynamic");
-            payload.Should().Contain("sub", "818727");
-            payload.Should().Contain("idp", "local");
+            payload.Should().HaveCount(13);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.dynamic");
+            payload["sub"].GetString().Should().Be("818727");
+            payload["idp"].GetString().Should().Be("local");
 
-            payload.Should().Contain("client_extra", "extra_claim");
+            payload["client_extra"].GetString().Should().Be("extra_claim");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
 
-            var amr = payload["amr"] as JArray;
+            var amr = payload["amr"].EnumerateArray();
             amr.Count().Should().Be(1);
             amr.First().ToString().Should().Be("delegation");
         }
@@ -561,7 +560,7 @@ namespace IdentityServer.IntegrationTests.Clients
                 {
                     { "scope", "api1" },
 
-                    { "claim", "extra_claim"},
+                    { "claim", "extra_claim" },
                 }
             });
 
@@ -574,21 +573,21 @@ namespace IdentityServer.IntegrationTests.Clients
 
             var payload = GetPayload(response);
 
-            payload.Count().Should().Be(9);
-            payload.Should().Contain("iss", "https://idsvr4");
-            payload.Should().Contain("client_id", "client.dynamic");
-            payload.Should().Contain("client_extra", "extra_claim");
+            payload.Should().HaveCount(9);
+            payload["iss"].GetString().Should().Be("https://idsvr4");
+            payload["client_id"].GetString().Should().Be("client.dynamic");
+            payload["client_extra"].GetString().Should().Be("extra_claim");
 
-            payload["aud"].Should().Be("api");
+            payload["aud"].GetString().Should().Be("api");
 
-            var scopes = payload["scope"] as JArray;
+            var scopes = payload["scope"].EnumerateArray();
             scopes.First().ToString().Should().Be("api1");
         }
 
-        private Dictionary<string, object> GetPayload(TokenResponse response)
+        private Dictionary<string, JsonElement> GetPayload(TokenResponse response)
         {
             var token = response.AccessToken.Split('.').Skip(1).Take(1).First();
-            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+            var dictionary = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
                 Encoding.UTF8.GetString(Base64Url.Decode(token)));
 
             return dictionary;

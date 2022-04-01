@@ -127,7 +127,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.AddClientStore<InMemoryClientStore>();
 
-            var existingCors = builder.Services.Where(x => x.ServiceType == typeof(ICorsPolicyService)).LastOrDefault();
+            var existingCors = builder.Services.LastOrDefault(x => x.ServiceType == typeof(ICorsPolicyService));
             if (existingCors != null && 
                 existingCors.ImplementationType == typeof(DefaultCorsPolicyService) && 
                 existingCors.Lifetime == ServiceLifetime.Transient)

@@ -1,7 +1,7 @@
 ﻿using Clients;
 using IdentityModel.Client;
 using IdentityModel.OidcClient;
-using Newtonsoft.Json.Linq;
+
 using Serilog;
 using System;
 using System.Net.Http;

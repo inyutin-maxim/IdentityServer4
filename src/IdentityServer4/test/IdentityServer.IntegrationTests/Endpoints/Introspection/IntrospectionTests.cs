@@ -7,14 +7,15 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using IdentityModel.Client;
 using IdentityServer.IntegrationTests.Endpoints.Introspection.Setup;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
+
 using Xunit;
 
 namespace IdentityServer.IntegrationTests.Endpoints.Introspection
@@ -120,10 +121,11 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
                 client_secret = "secret",
                 token = tokenResponse.AccessToken
             };
-            var json = JsonConvert.SerializeObject(data);
+            var json = JsonSerializer.Serialize(data);
 
             var client = new HttpClient(_handler);
-            var response = await client.PostAsync(IntrospectionEndpoint, new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await client.PostAsync(IntrospectionEndpoint,
+                new StringContent(json, Encoding.UTF8, "application/json"));
             response.StatusCode.Should().Be(HttpStatusCode.UnsupportedMediaType);
         }
 
@@ -152,8 +154,8 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
             introspectionResponse.IsError.Should().Be(false);
 
             var scopes = from c in introspectionResponse.Claims
-                         where c.Type == "scope"
-                         select c;
+                where c.Type == "scope"
+                select c;
 
             scopes.Count().Should().Be(1);
             scopes.First().Value.Should().Be("api1");
@@ -180,15 +182,15 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
                 Token = tokenResponse.AccessToken
             });
 
-            var values = introspectionResponse.Json.ToObject<Dictionary<string, object>>();
+            var values = introspectionResponse.Json.ToObject<Dictionary<string, JsonElement>>();
 
-            values["aud"].GetType().Name.Should().Be("String");
-            values["iss"].GetType().Name.Should().Be("String");
-            values["nbf"].GetType().Name.Should().Be("Int64");
-            values["exp"].GetType().Name.Should().Be("Int64");
-            values["client_id"].GetType().Name.Should().Be("String");
-            values["active"].GetType().Name.Should().Be("Boolean");
-            values["scope"].GetType().Name.Should().Be("String");
+            values["aud"].ValueKind.Should().Be(JsonValueKind.String);
+            values["iss"].ValueKind.Should().Be(JsonValueKind.String);
+            values["nbf"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["exp"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["client_id"].ValueKind.Should().Be(JsonValueKind.String);
+            values["active"].ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+            values["scope"].ValueKind.Should().Be(JsonValueKind.String);
 
             values["scope"].ToString().Should().Be("api1");
         }
@@ -219,17 +221,17 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
                 Token = tokenResponse.AccessToken
             });
 
-            var values = introspectionResponse.Json.ToObject<Dictionary<string, object>>();
+            var values = introspectionResponse.Json.ToObject<Dictionary<string, JsonElement>>();
 
-            values["aud"].GetType().Name.Should().Be("String");
-            values["iss"].GetType().Name.Should().Be("String");
-            values["nbf"].GetType().Name.Should().Be("Int64");
-            values["exp"].GetType().Name.Should().Be("Int64");
-            values["auth_time"].GetType().Name.Should().Be("Int64");
-            values["client_id"].GetType().Name.Should().Be("String");
-            values["sub"].GetType().Name.Should().Be("String");
-            values["active"].GetType().Name.Should().Be("Boolean");
-            values["scope"].GetType().Name.Should().Be("String");
+            values["aud"].ValueKind.Should().Be(JsonValueKind.String);
+            values["iss"].ValueKind.Should().Be(JsonValueKind.String);
+            values["nbf"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["exp"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["auth_time"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["client_id"].ValueKind.Should().Be(JsonValueKind.String);
+            values["sub"].ValueKind.Should().Be(JsonValueKind.String);
+            values["active"].ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+            values["scope"].ValueKind.Should().Be(JsonValueKind.String);
 
             values["scope"].ToString().Should().Be("api1");
         }
@@ -258,22 +260,22 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
                 Token = tokenResponse.AccessToken
             });
 
-            var values = introspectionResponse.Json.ToObject<Dictionary<string, object>>();
+            var values = introspectionResponse.Json.ToObject<Dictionary<string, JsonElement>>();
 
-            values["aud"].GetType().Name.Should().Be("JArray");
-
-            var audiences = ((JArray)values["aud"]);
+            values["aud"].GetType().Name.Should().Be(nameof(JsonElement));
+            
+            var audiences = values["aud"].EnumerateArray();
             foreach (var aud in audiences)
             {
-                aud.Type.Should().Be(JTokenType.String);
+                aud.ValueKind.Should().Be(JsonValueKind.String);
             }
 
-            values["iss"].GetType().Name.Should().Be("String");
-            values["nbf"].GetType().Name.Should().Be("Int64");
-            values["exp"].GetType().Name.Should().Be("Int64");
-            values["client_id"].GetType().Name.Should().Be("String");
-            values["active"].GetType().Name.Should().Be("Boolean");
-            values["scope"].GetType().Name.Should().Be("String");
+            values["iss"].ValueKind.Should().Be(JsonValueKind.String);
+            values["nbf"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["exp"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["client_id"].ValueKind.Should().Be(JsonValueKind.String);
+            values["active"].ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+            values["scope"].ValueKind.Should().Be(JsonValueKind.String);
 
             var scopes = values["scope"].ToString();
             scopes.Should().Be("api3-a api3-b");
@@ -303,15 +305,15 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
                 Token = tokenResponse.AccessToken
             });
 
-            var values = introspectionResponse.Json.ToObject<Dictionary<string, object>>();
+            var values = introspectionResponse.Json.ToObject<Dictionary<string, JsonElement>>();
 
-            values["aud"].GetType().Name.Should().Be("String");
-            values["iss"].GetType().Name.Should().Be("String"); 
-            values["nbf"].GetType().Name.Should().Be("Int64"); 
-            values["exp"].GetType().Name.Should().Be("Int64"); 
-            values["client_id"].GetType().Name.Should().Be("String"); 
-            values["active"].GetType().Name.Should().Be("Boolean"); 
-            values["scope"].GetType().Name.Should().Be("String");
+            values["aud"].ValueKind.Should().Be(JsonValueKind.String);
+            values["iss"].ValueKind.Should().Be(JsonValueKind.String);
+            values["nbf"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["exp"].ValueKind.Should().Be(JsonValueKind.Number);
+            values["client_id"].ValueKind.Should().Be(JsonValueKind.String);
+            values["active"].ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+            values["scope"].ValueKind.Should().Be(JsonValueKind.String);
 
             var scopes = values["scope"].ToString();
             scopes.Should().Be("api3-a api3-b");
@@ -345,8 +347,8 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
             introspectionResponse.IsError.Should().BeFalse();
 
             var scopes = from c in introspectionResponse.Claims
-                         where c.Type == "scope"
-                         select c.Value;
+                where c.Type == "scope"
+                select c.Value;
 
             scopes.Count().Should().Be(1);
             scopes.First().Should().Be("api3-a");
@@ -378,8 +380,8 @@ namespace IdentityServer.IntegrationTests.Endpoints.Introspection
             introspectionResponse.IsError.Should().Be(false);
 
             var scopes = from c in introspectionResponse.Claims
-                         where c.Type == "scope"
-                         select c;
+                where c.Type == "scope"
+                select c;
 
             scopes.Count().Should().Be(1);
             scopes.First().Value.Should().Be("api1");

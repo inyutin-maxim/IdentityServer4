@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using IdentityModel.Client;
@@ -45,7 +46,7 @@ namespace IdentityServer.IntegrationTests.Clients
             });
 
             var fields = GetFields(response);
-            fields.Should().Contain("custom", "custom");
+            fields["custom"].GetString().Should().Be("custom");
         }
 
         [Fact]
@@ -64,7 +65,7 @@ namespace IdentityServer.IntegrationTests.Clients
             });
 
             var fields = GetFields(response);
-            fields.Should().Contain("custom", "custom");
+            fields["custom"].GetString().Should().Be("custom");
         }
 
         [Fact]
@@ -92,7 +93,7 @@ namespace IdentityServer.IntegrationTests.Clients
             });
 
             var fields = GetFields(response);
-            fields.Should().Contain("custom", "custom");
+            fields["custom"].GetString().Should().Be("custom");
         }
 
         [Fact]
@@ -109,17 +110,17 @@ namespace IdentityServer.IntegrationTests.Clients
                 Parameters =
                 {
                     { "scope", "api1" },
-                    { "custom_credential", "custom credential"}
+                    { "custom_credential", "custom credential" }
                 }
             });
 
             var fields = GetFields(response);
-            fields.Should().Contain("custom", "custom");
+            fields["custom"].GetString().Should().Be("custom");
         }
 
-        private Dictionary<string, object> GetFields(TokenResponse response)
+        private Dictionary<string, JsonElement> GetFields(TokenResponse response)
         {
-            return response.Json.ToObject<Dictionary<string, object>>();
+            return response.Json.ToObject<Dictionary<string, JsonElement>>();
         }
     }
 }

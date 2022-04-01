@@ -2,14 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 #pragma warning disable 1591
 
+/*
 namespace IdentityServer4.Stores.Serialization
 {
     public class CustomContractResolver: DefaultContractResolver
@@ -20,4 +18,4 @@ namespace IdentityServer4.Stores.Serialization
             return props.Where(p => p.Writable).ToList();
         }
     }
-}
+}*/

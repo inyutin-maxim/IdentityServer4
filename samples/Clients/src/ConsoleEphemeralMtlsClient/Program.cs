@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Clients;
 using IdentityModel;
 using IdentityModel.Client;
-using Newtonsoft.Json.Linq;
+
 
 namespace ConsoleEphemeralMtlsClient
 {

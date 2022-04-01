@@ -6,6 +6,7 @@ using System;
 using IdentityServer4.Models;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using IdentityModel;
 using IdentityServer4.Configuration;
@@ -27,7 +28,8 @@ namespace IdentityServer4.Services
         /// <param name="client">An HTTP client</param>
         /// <param name="options">The options.</param>
         /// <param name="loggerFactory">The logger factory</param>
-        public DefaultJwtRequestUriHttpClient(HttpClient client, IdentityServerOptions options, ILoggerFactory loggerFactory)
+        public DefaultJwtRequestUriHttpClient(HttpClient client, IdentityServerOptions options,
+            ILoggerFactory loggerFactory)
         {
             _client = client;
             _options = options;
@@ -39,7 +41,9 @@ namespace IdentityServer4.Services
         public async Task<string> GetJwtAsync(string url, Client client)
         {
             var req = new HttpRequestMessage(HttpMethod.Get, url);
+            // TODO: Пока не понял как поправить правильно
             req.Properties.Add(IdentityServerConstants.JwtRequestClientKey, client);
+            //req.Options.Set(new HttpRequestOptionsKey<string>(IdentityServerConstants.JwtRequestClientKey), JsonSerializer.Serialize(client));
 
             var response = await _client.SendAsync(req);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
@@ -47,19 +51,20 @@ namespace IdentityServer4.Services
                 if (_options.StrictJarValidation)
                 {
                     if (!string.Equals(response.Content.Headers.ContentType.MediaType,
-                        $"application/{JwtClaimTypes.JwtTypes.AuthorizationRequest}", StringComparison.Ordinal))
+                            $"application/{JwtClaimTypes.JwtTypes.AuthorizationRequest}", StringComparison.Ordinal))
                     {
-                        _logger.LogError("Invalid content type {type} from jwt url {url}", response.Content.Headers.ContentType.MediaType, url);
+                        _logger.LogError("Invalid content type {type} from jwt url {url}",
+                            response.Content.Headers.ContentType.MediaType, url);
                         return null;
                     }
                 }
 
                 _logger.LogDebug("Success http response from jwt url {url}", url);
-                
+
                 var json = await response.Content.ReadAsStringAsync();
                 return json;
             }
-                
+
             _logger.LogError("Invalid http status code {status} from jwt url {url}", response.StatusCode, url);
             return null;
         }

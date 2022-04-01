@@ -110,14 +110,15 @@ namespace IdentityServer.UnitTests.Services.Default
         }
 
         [Fact]
-        public void GrantConsentAsync_should_throw_if_granted_and_no_subject()
+        public async Task GrantConsentAsync_should_throw_if_granted_and_no_subject()
         {
-            Func<Task> act = () => _subject.GrantConsentAsync(
+            var act = () => _subject.GrantConsentAsync(
                 new AuthorizationRequest(), 
                 new ConsentResponse() { ScopesValuesConsented = new[] { "openid" } }, 
                 null);
 
-            act.Should().Throw<ArgumentNullException>()
+            var throwExactlyAsync = await act.Should().ThrowExactlyAsync<ArgumentNullException>();
+             throwExactlyAsync
                 .And.Message.Should().Contain("subject");
         }
 

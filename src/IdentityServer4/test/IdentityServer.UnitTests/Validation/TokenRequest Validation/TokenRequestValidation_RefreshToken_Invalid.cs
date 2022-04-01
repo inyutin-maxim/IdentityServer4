@@ -32,9 +32,11 @@ namespace IdentityServer.UnitTests.Validation.TokenRequest_Validation
 
             var validator = Factory.CreateTokenRequestValidator();
 
-            var parameters = new NameValueCollection();
-            parameters.Add(OidcConstants.TokenRequest.GrantType, "refresh_token");
-            parameters.Add(OidcConstants.TokenRequest.RefreshToken, "nonexistent");
+            var parameters = new NameValueCollection
+            {
+                { OidcConstants.TokenRequest.GrantType, "refresh_token" },
+                { OidcConstants.TokenRequest.RefreshToken, "nonexistent" }
+            };
 
             var result = await validator.ValidateRequestAsync(parameters, client.ToValidationResult());
 
@@ -145,9 +147,11 @@ namespace IdentityServer.UnitTests.Validation.TokenRequest_Validation
             var validator = Factory.CreateTokenRequestValidator(
                 refreshTokenStore: grants);
 
-            var parameters = new NameValueCollection();
-            parameters.Add(OidcConstants.TokenRequest.GrantType, "refresh_token");
-            parameters.Add(OidcConstants.TokenRequest.RefreshToken, handle);
+            var parameters = new NameValueCollection
+            {
+                { OidcConstants.TokenRequest.GrantType, "refresh_token" },
+                { OidcConstants.TokenRequest.RefreshToken, handle }
+            };
 
             var result = await validator.ValidateRequestAsync(parameters, client.ToValidationResult());
 

@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using IdentityModel;
@@ -17,7 +18,7 @@ using IdentityServer.IntegrationTests.Common;
 using IdentityServer4.Models;
 using IdentityServer4.Test;
 using Microsoft.AspNetCore.WebUtilities;
-using Newtonsoft.Json.Linq;
+
 using Xunit;
 using static IdentityServer4.IdentityServerConstants;
 
@@ -514,21 +515,21 @@ namespace IdentityServer.IntegrationTests.Endpoints.EndSession
 
                 var bytes = Base64Url.Decode(parts[1]);
                 var json = Encoding.UTF8.GetString(bytes);
-                var payload = JObject.Parse(json);
+                var payload = JsonSerializer.SerializeToElement(json).ToObject<Dictionary<string, JsonElement>>(); // TODO: исправлено
                 payload["iss"].ToString().Should().Be("https://server");
                 payload["sub"].ToString().Should().Be("bob");
                 payload["aud"].ToString().Should().Be("client3");
                 payload["iat"].Should().NotBeNull();
                 payload["jti"].Should().NotBeNull();
                 payload["sid"].Should().NotBeNull();
-                payload["events"].Type.Should().Be(JTokenType.Object);
+                payload["events"].ValueKind.Should().Be(JsonValueKind.Object);
 
-                var events = (JObject)payload["events"];
+                var events = payload["events"].ToObject<Dictionary<string, JsonElement>>();
                 events.Count.Should().Be(1);
                 events["http://schemas.openid.net/event/backchannel-logout"].Should().NotBeNull();
-                events["http://schemas.openid.net/event/backchannel-logout"].Type.Should().Be(JTokenType.Object);
+                events["http://schemas.openid.net/event/backchannel-logout"].ValueKind.Should().Be(JsonValueKind.Object);
 
-                var evt = (JObject)events["http://schemas.openid.net/event/backchannel-logout"];
+                var evt = events["http://schemas.openid.net/event/backchannel-logout"].ToObject<Dictionary<string, JsonElement>>();
                 evt.Count.Should().Be(0);
             };
 
